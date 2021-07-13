@@ -6,10 +6,11 @@ import json
 volcanoes = pandas.read_csv("Volcanoes.txt")
 
 # Creates map centered on US
-map = folium.Map([38, -99], zoom_start = 5, tiles = "CartoDB Positron")
+map = folium.Map([38, -99], zoom_start = 5, tiles = "Stamen Terrain")
 
 # Housekeeping
-feature_group_one = folium.FeatureGroup(name = "My Map")
+feature_group_volcanoes = folium.FeatureGroup(name = "US Volcanoes")
+feature_group_populations = folium.FeatureGroup(name = "Country Populations")
 
 def pick_marker_color(volcano_height):
 
@@ -35,13 +36,17 @@ for index, volcano in volcanoes.iterrows():
     popup = folium.Popup(iframe, min_width=250, max_width=250)
 
     # Final marker creaton
-    feature_group_one.add_child(folium.Marker([volcano["LAT"], volcano["LON"]], tooltip = volcano["NAME"], popup = popup, icon = folium.Icon(color = pick_marker_color(volcano["ELEV"]),icon = "fire")))
+    feature_group_volcanoes.add_child(folium.Marker([volcano["LAT"], volcano["LON"]], tooltip = volcano["NAME"], popup = popup, icon = folium.Icon(color = pick_marker_color(volcano["ELEV"]),icon = "fire")))
 
-# Adds in population by country from local data file
-feature_group_one.add_child(folium.GeoJson(data = json.load(open("world.json", "r", encoding = "utf-8-sig")), style_function = lambda x: {"fillColor":"green" if x["properties"]["POP2005"] < 30000000 else "yellow" if x["properties"]["POP2005"] < 100000000 else "red"}))
+# Creates population by country from local data file, colors each country by population level
+feature_group_populations.add_child(folium.GeoJson(data = json.load(open("world.json", "r", encoding = "utf-8-sig")), style_function = lambda x: {"fillColor":"green" if x["properties"]["POP2005"] < 30000000 else "yellow" if x["properties"]["POP2005"] < 100000000 else "red"}))
 
-# Adds all markers to the map
-map.add_child(feature_group_one)
+# Adds all volcano markers and population coloring to the map
+map.add_child(feature_group_volcanoes)
+map.add_child(feature_group_populations)
+
+# Adds a layer control panel to turn population coloring and volcano markers on and off
+map.add_child(folium.LayerControl())
 
 # Creates/Overwrites map file
 map.save("Map1.html")
